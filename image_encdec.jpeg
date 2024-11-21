@@ -1,0 +1,127 @@
+import os
+from tkinter import Tk, Button, Label, Entry, filedialog, messagebox, Frame
+from tkinter import ttk
+from PIL import Image
+import random
+
+def get_seeded_random(seed):
+    """Returns a seeded random generator."""
+    return random.Random(seed)
+
+def encrypt_image(input_image_path, output_image_path, seed):
+    """Encrypts the image by manipulating pixel values."""
+    image = Image.open(input_image_path)
+    width, height = image.size
+    pixels = list(image.getdata())
+    random_gen = get_seeded_random(seed)
+
+    indices = list(range(len(pixels)))
+    random_gen.shuffle(indices)
+
+    encrypted_pixels = [pixels[i] for i in indices]
+
+    encrypted_image = Image.new(image.mode, (width, height))
+    encrypted_image.putdata(encrypted_pixels)
+    encrypted_image.save(output_image_path)
+    return True
+
+def decrypt_image(input_image_path, output_image_path, seed):
+    """Decrypts the image by reversing the encryption process."""
+    image = Image.open(input_image_path)
+    width, height = image.size
+    encrypted_pixels = list(image.getdata())
+    random_gen = get_seeded_random(seed)
+
+    indices = list(range(len(encrypted_pixels)))
+    random_gen.shuffle(indices)
+
+    decrypted_pixels = [None] * len(encrypted_pixels)
+
+    for original_index, shuffled_index in enumerate(indices):
+        decrypted_pixels[shuffled_index] = encrypted_pixels[original_index]
+
+    decrypted_image = Image.new(image.mode, (width, height))
+    decrypted_image.putdata(decrypted_pixels)
+    decrypted_image.save(output_image_path)
+    return True
+
+def select_input_image():
+    """Opens a file dialog to select an input image."""
+    input_image_path = filedialog.askopenfilename(title="Select Image")
+    input_image_label.config(text=input_image_path if input_image_path else "No image selected")
+
+def select_output_image():
+    """Opens a file dialog to select an output image path."""
+    output_image_path = filedialog.asksaveasfilename(defaultextension=".png",
+                                                     filetypes=[("PNG files", "*.png"),
+                                                                ("JPEG files", "*.jpg;*.jpeg"),
+                                                                ("All files", "*.*")],
+                                                     title="Save Encrypted/Decrypted Image")
+    output_image_label.config(text=output_image_path if output_image_path else "No output path selected")
+
+def encrypt():
+    input_image_path = input_image_label.cget("text")
+    output_image_path = output_image_label.cget("text")
+    seed = seed_entry.get()
+
+    if not input_image_path or not output_image_path or input_image_path == "No image selected" or output_image_path == "No output path selected":
+        messagebox.showerror("Error", "Please select input and output images.")
+        return
+
+    if encrypt_image(input_image_path, output_image_path, seed):
+        messagebox.showinfo("Success", "Image encrypted successfully!")
+
+def decrypt():
+    input_image_path = input_image_label.cget("text")
+    output_image_path = output_image_label.cget("text")
+    seed = seed_entry.get()
+
+    if not input_image_path or not output_image_path or input_image_path == "No image selected" or output_image_path == "No output path selected":
+        messagebox.showerror("Error", "Please select input and output images.")
+        return
+
+    if decrypt_image(input_image_path, output_image_path, seed):
+        messagebox.showinfo("Success", "Image decrypted successfully!")
+
+# Create main window
+root = Tk()
+root.title("Image Encryption Tool")
+root.geometry("400x400")
+root.configure(bg="#2E3440")  # Set a subtle background color
+
+# Use ttk for modern styles
+style = ttk.Style()
+style.theme_use('clam')  # You can choose from themes like 'clam', 'alt', 'default', 'classic'
+style.configure('TLabel', background="#2E3440", foreground="#D8DEE9", font=("Helvetica", 10))
+style.configure('TButton', background="#4C566A", foreground="#ECEFF4", font=("Helvetica", 10))
+style.configure('TEntry', fieldbackground="#4C566A", foreground="#ECEFF4", font=("Helvetica", 10))
+
+# Frame to contain input and output selection
+frame = Frame(root, bg="#3B4252")
+frame.pack(pady=20, padx=20, fill="x")
+
+# Input image section
+ttk.Label(frame, text="Select Image to Encrypt/Decrypt:", style='TLabel').pack(anchor="w", pady=(0, 5))
+input_image_label = ttk.Label(frame, text="No image selected", style='TLabel', relief="sunken")
+input_image_label.pack(fill="x", pady=5)
+ttk.Button(frame, text="Browse", command=select_input_image).pack(pady=5)
+
+# Output image section
+ttk.Label(frame, text="Output Image Path:", style='TLabel').pack(anchor="w", pady=(10, 5))
+output_image_label = ttk.Label(frame, text="No output path selected", style='TLabel', relief="sunken")
+output_image_label.pack(fill="x", pady=5)
+ttk.Button(frame, text="Save As", command=select_output_image).pack(pady=5)
+
+# Seed entry section
+ttk.Label(frame, text="Enter Seed Key:", style='TLabel').pack(anchor="w", pady=(10, 5))
+seed_entry = ttk.Entry(frame)
+seed_entry.pack(fill="x", pady=5)
+
+# Encrypt/Decrypt buttons
+button_frame = Frame(root, bg="#3B4252")
+button_frame.pack(pady=10)
+
+ttk.Button(button_frame, text="Encrypt Image", command=encrypt).pack(side="left", padx=10)
+ttk.Button(button_frame, text="Decrypt Image", command=decrypt).pack(side="right", padx=10)
+
+root.mainloop()
