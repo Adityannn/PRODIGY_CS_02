@@ -31,8 +31,8 @@ pip install Pillow
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/image-encdec-tool.git
-cd image-encdec-tool
+git clone https://github.com/Adityannn/PRODIGY_CS_02.git
+cd PRODIGY_CS_02
 ```
 
 ## Usage
